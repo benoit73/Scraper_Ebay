@@ -155,25 +155,36 @@ namespace BotEbay
                         {
                             string itemUrl = lien;
                             string name = HttpUtility.HtmlDecode(item.SelectSingleNode(".//h1[@class='x-item-title__mainTitle']/span[contains(@class, 'ux-textspans ux-textspans--BOLD')]")?.InnerText);
-                            string imageUrl = item.SelectSingleNode(".//img[contains(@loading, 'eager')]").Attributes["src"].Value;
+                            string mainImageUrl = item.SelectSingleNode(".//img[contains(@loading, 'eager')]").Attributes["src"].Value;
                             string price = item.SelectSingleNode(".//span[contains(@itemprop, 'price')]").Attributes["content"].Value;
                             string timeLeft = item.SelectSingleNode(".//span[@class='ux-timer']/span[contains(@class, 'ux-timer__text')]")?.InnerText;
 
-                            HtmlNodeCollection photos = document.DocumentNode.SelectNodes("//div[contains(@class, 'ux-image-carousel-item");
-                            foreach (HtmlNode photo in photos)
+                            HtmlNodeCollection imgNodes = item.SelectNodes(".//img[contains(@class, 'ux-image-magnify__image--original') and contains(@style, 'max-width:500px;max-height:500px;')]");
+                            List<string> imageUrls = new List<string>();
+
+                            if (imgNodes != null)
                             {
-                                string photoUrl = photo.SelectSingleNode("//img").Attributes["src"].Value;
+                                foreach (HtmlNode imgNode in imgNodes)
+                                {
+                                    string imageUrl = imgNode.GetAttributeValue("data-src", "");
+                                    imageUrls.Add(imageUrl);
+                                }
                             }
 
-                            
+                            // Convertir la liste en tableau de chaînes
+                            string[] images = imageUrls.ToArray();
 
-
+                            // Afficher les URL des images
+                            foreach (string imgUrl in images)
+                            {
+                                Console.WriteLine(imgUrl);
+                            }
 
                             string pattern = @"\""(.*?)\""";
                             Match match = Regex.Match(name, pattern);
                             string marque = match.Success ? match.Groups[1].Value : "Autre";
 
-                            Article article = new Article(name, price, timeLeft, imageUrl, itemUrl, marque);
+                            Article article = new Article(name, price, timeLeft, mainImageUrl, itemUrl, marque);
                             articles.Add(article);
                         }
                         catch (Exception ex)
@@ -185,7 +196,7 @@ namespace BotEbay
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error("erreur sur le chargement de la page des articles : " + ex.Message);
+                    Logger.Error("Erreur sur le chargement de la page des articles : " + ex.Message);
                     continue;
                 }
             }
