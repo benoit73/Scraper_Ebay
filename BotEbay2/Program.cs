@@ -46,8 +46,9 @@ namespace BotEbay
             public string Image { get; set; }
             public string URL { get; set; }
             public string Marque { get; set; }
+            public string[] Photos { get; set; }
 
-            public Article(string nom, string prix, string temps, string image, string url, string marque)
+            public Article(string nom, string prix, string temps, string image, string url, string marque, string[] photos)
             {
                 Nom = nom;
                 Prix = prix;
@@ -55,8 +56,10 @@ namespace BotEbay
                 Image = image;
                 URL = url;
                 Marque = marque;
+                Photos = photos;
             }
         }
+
 
 
         static void Timer()
@@ -172,19 +175,13 @@ namespace BotEbay
                             }
 
                             // Convertir la liste en tableau de chaînes
-                            string[] images = imageUrls.ToArray();
-
-                            // Afficher les URL des images
-                            foreach (string imgUrl in images)
-                            {
-                                Console.WriteLine(imgUrl);
-                            }
+                            string[] images = imageUrls.ToArray();                          
 
                             string pattern = @"\""(.*?)\""";
                             Match match = Regex.Match(name, pattern);
                             string marque = match.Success ? match.Groups[1].Value : "Autre";
 
-                            Article article = new Article(name, price, timeLeft, mainImageUrl, itemUrl, marque);
+                            Article article = new Article(name, price, timeLeft, mainImageUrl, itemUrl, marque, images);
                             articles.Add(article);
                         }
                         catch (Exception ex)
@@ -265,20 +262,51 @@ namespace BotEbay
             string insertQuery = "INSERT INTO sac (Nom, Prix, Temps, Image, URL, Marque) VALUES (@nom, @prix, @temps, @image, @url, @marque)";
             string insertQuery2 = @"INSERT IGNORE INTO marques (Marque, compteur)
                         SELECT @marque, IFNULL(MAX(compteur), 0) + 1 FROM marques";
+            string insertQuery3 = "INSERT INTO photostable (Sac, URL) VALUES (@nom, @urls)";
+
+          
+
             foreach (Article article in articles)
             {
-                MySqlCommand command = new MySqlCommand(insertQuery, connection);
-                command.Parameters.AddWithValue("@nom", article.Nom);
-                command.Parameters.AddWithValue("@prix", article.Prix);
-                command.Parameters.AddWithValue("@temps", article.Temps);
-                command.Parameters.AddWithValue("@image", article.Image);
-                command.Parameters.AddWithValue("@url", article.URL);
-                command.Parameters.AddWithValue("@marque", article.Marque);
-                command.ExecuteNonQuery();
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(insertQuery, connection);
+                    command.Parameters.AddWithValue("@nom", article.Nom);
+                    command.Parameters.AddWithValue("@prix", article.Prix);
+                    command.Parameters.AddWithValue("@temps", article.Temps);
+                    command.Parameters.AddWithValue("@image", article.Image);
+                    command.Parameters.AddWithValue("@url", article.URL);
+                    command.Parameters.AddWithValue("@marque", article.Marque);
+                    command.ExecuteNonQuery();
+                }
+                catch (Exception ex) { Logger.Error(ex + "erreur command1"); }
 
-                MySqlCommand command2 = new MySqlCommand(insertQuery2, connection);
-                command2.Parameters.AddWithValue("@marque", article.Marque);
-                command2.ExecuteNonQuery();
+                try
+                {
+                    MySqlCommand command2 = new MySqlCommand(insertQuery2, connection);
+                    command2.Parameters.AddWithValue("@marque", article.Marque);
+                    command2.ExecuteNonQuery();
+                }
+                    
+                catch(Exception ex) { Logger.Error(ex + "erreur command2"); }
+
+
+                try
+                {
+                    foreach (string url in article.Photos)
+                    {
+                        MySqlCommand command3 = new MySqlCommand(insertQuery3, connection);
+                        command3.Parameters.AddWithValue("@nom", article.Nom);
+                        command3.Parameters.AddWithValue("@urls", url);
+                     //   command3.ExecuteNonQuery();
+                    }
+                }
+
+                catch(Exception ex) 
+                {
+                    Console.WriteLine(ex + "erreur command3"); 
+                    Logger.Error(ex);
+                }
 
 
             }
