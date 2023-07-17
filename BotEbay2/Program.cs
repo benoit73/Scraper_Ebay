@@ -159,27 +159,39 @@ namespace BotEbay
                             string itemUrl = lien;
                             string name = HttpUtility.HtmlDecode(item.SelectSingleNode(".//h1[@class='x-item-title__mainTitle']/span[contains(@class, 'ux-textspans ux-textspans--BOLD')]")?.InnerText);
                             string mainImageUrl = item.SelectSingleNode(".//img[contains(@loading, 'eager')]").Attributes["src"].Value;
-                            string price = item.SelectSingleNode(".//span[contains(@itemprop, 'price')]").Attributes["content"].Value;
+                            string price = item.SelectSingleNode(".//div[@class='x-price-primary']/span[contains(@class, 'ux-textspans')]").InnerText.Trim();
                             string timeLeft = item.SelectSingleNode(".//span[@class='ux-timer']/span[contains(@class, 'ux-timer__text')]")?.InnerText;
 
-                            
+
 
                             HtmlNodeCollection imgNodes = item.SelectNodes(".//img[contains(@class, 'ux-image-magnify__image--original') and contains(@style, 'max-width:500px;max-height:500px;')]");
 
-                            HashSet<HtmlNode> uniqueImgNodes = new HashSet<HtmlNode>();
-
+                            HtmlNodeCollection imgNodes2 = new HtmlNodeCollection(null);
                             foreach (HtmlNode imgNode in imgNodes)
                             {
-                                uniqueImgNodes.Add(imgNode);
+                                bool isDuplicate = false;
+                                foreach (HtmlNode imgNode2 in imgNodes2)
+                                {
+                                    if (imgNode == imgNode2)
+                                    {
+                                        isDuplicate = true;
+                                        break;
+                                    }
+                                }
+                                if (!isDuplicate)
+                                {
+                                    imgNodes2.Add(imgNode);
+                                }
                             }
+
 
                             List<string> imageUrls = new List<string>();
 
-                            if (uniqueImgNodes != null)
+                            if (imgNodes2 != null)
                             {
-                                foreach (HtmlNode uniqueImgNode in uniqueImgNodes)
+                                foreach (HtmlNode imgNode in imgNodes2)
                                 {
-                                    string imageUrl = uniqueImgNode.GetAttributeValue("data-src", "");
+                                    string imageUrl = imgNode.GetAttributeValue("data-src", "");
                                     imageUrls.Add(imageUrl);
                                 }
                             }
