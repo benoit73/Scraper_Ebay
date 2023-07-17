@@ -162,14 +162,24 @@ namespace BotEbay
                             string price = item.SelectSingleNode(".//span[contains(@itemprop, 'price')]").Attributes["content"].Value;
                             string timeLeft = item.SelectSingleNode(".//span[@class='ux-timer']/span[contains(@class, 'ux-timer__text')]")?.InnerText;
 
+                            
+
                             HtmlNodeCollection imgNodes = item.SelectNodes(".//img[contains(@class, 'ux-image-magnify__image--original') and contains(@style, 'max-width:500px;max-height:500px;')]");
+
+                            HashSet<HtmlNode> uniqueImgNodes = new HashSet<HtmlNode>();
+
+                            foreach (HtmlNode imgNode in imgNodes)
+                            {
+                                uniqueImgNodes.Add(imgNode);
+                            }
+
                             List<string> imageUrls = new List<string>();
 
-                            if (imgNodes != null)
+                            if (uniqueImgNodes != null)
                             {
-                                foreach (HtmlNode imgNode in imgNodes)
+                                foreach (HtmlNode uniqueImgNode in uniqueImgNodes)
                                 {
-                                    string imageUrl = imgNode.GetAttributeValue("data-src", "");
+                                    string imageUrl = uniqueImgNode.GetAttributeValue("data-src", "");
                                     imageUrls.Add(imageUrl);
                                 }
                             }
